@@ -1,0 +1,1284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BTS Cargo Cost Calculator - Direct Clearance MSA</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* BTS Colors from logo */
+        :root {
+            --bts-navy: #0A2257;     /* Dark navy blue from BTS letters */
+            --bts-orange: #F26D21;   /* Orange from globe and tagline */
+            --bts-light-orange: #FFEBDF; /* Light orange for accents */
+            --bts-light-blue: #E8EDF5; /* Light blue for backgrounds */
+        }
+        
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            transition: all 0.3s ease;
+        }
+        body {
+            background: linear-gradient(135deg, var(--bts-light-blue) 0%, #f5f7fa 100%);
+            margin: 0;
+            padding: 20px;
+            color: #333;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(10, 34, 87, 0.1);
+            padding: 30px;
+            border-top: 5px solid var(--bts-orange);
+            position: relative;
+            overflow: hidden;
+        }
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 150px;
+            height: 150px;
+            background: radial-gradient(circle at top right, var(--bts-light-orange), transparent 70%);
+            opacity: 0.7;
+            z-index: 0;
+        }
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eaeaea;
+            position: relative;
+            z-index: 1;
+        }
+        .brand-name {
+            font-size: 36px;
+            font-weight: 800;
+            color: var(--bts-navy);
+            letter-spacing: 2px;
+            margin-bottom: 0;
+            text-shadow: 1px 1px 1px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: var(--bts-navy);
+            margin: 10px 0;
+            font-weight: 700;
+            position: relative;
+            display: inline-block;
+        }
+        h1::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 25%;
+            width: 50%;
+            height: 3px;
+            background-color: var(--bts-orange);
+            border-radius: 2px;
+        }
+        .subtitle {
+            color: var(--bts-orange);
+            font-size: 18px;
+            font-style: italic;
+            margin-top: 5px;
+        }
+        .form-container {
+            position: relative;
+            z-index: 1;
+        }
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+            gap: 20px;
+        }
+        .form-group {
+            flex: 1;
+            min-width: 250px;
+            position: relative;
+        }
+        .form-group i {
+            position: absolute;
+            left: 10px;
+            top: 40px;
+            color: var(--bts-navy);
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--bts-navy);
+            transition: color 0.3s;
+        }
+        .form-group:hover label {
+            color: var(--bts-orange);
+        }
+        input, select {
+            width: 100%;
+            padding: 12px 12px 12px 35px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 14px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--bts-orange);
+            box-shadow: 0 0 0 3px rgba(242, 109, 33, 0.2);
+        }
+        .btn {
+            background: linear-gradient(to right, var(--bts-navy), #153a7e);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            width: 100%;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 15px rgba(10, 34, 87, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .btn:hover {
+            background: linear-gradient(to right, var(--bts-orange), #f58a4e);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(242, 109, 33, 0.4);
+        }
+        .btn:active {
+            transform: translateY(1px);
+        }
+        .btn::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: 0.5s;
+        }
+        .btn:hover::after {
+            left: 100%;
+        }
+        .results {
+            margin-top: 40px;
+            padding-top: 20px;
+            border-top: 1px dashed #ccc;
+            position: relative;
+            z-index: 1;
+        }
+        .results h2 {
+            color: var(--bts-navy);
+            display: inline-block;
+            padding-bottom: 5px;
+            position: relative;
+        }
+        .results h2::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background-color: var(--bts-orange);
+            border-radius: 2px;
+        }
+        .cost-breakdown {
+            background-color: var(--bts-light-blue);
+            border-radius: 10px;
+            padding: 25px;
+            margin-top: 20px;
+            border-left: 5px solid var(--bts-navy);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            position: relative;
+            overflow: hidden;
+        }
+        .cost-breakdown::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 100px;
+            height: 100px;
+            background: radial-gradient(circle at top right, rgba(242, 109, 33, 0.1), transparent 70%);
+        }
+        .cost-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            position: relative;
+        }
+        .cost-item:last-child {
+            border-bottom: none;
+        }
+        .cost-item.total {
+            font-weight: bold;
+            font-size: 18px;
+            margin-top: 15px;
+            padding-top: 20px;
+            border-top: 2px solid var(--bts-orange);
+            color: var(--bts-navy);
+        }
+        .cost-item:hover {
+            background-color: rgba(255,255,255,0.5);
+            border-radius: 5px;
+            transform: translateX(5px);
+        }
+        .hidden {
+            display: none;
+        }
+        .field-description {
+            color: #777;
+            font-size: 12px;
+            margin-top: 4px;
+            font-style: italic;
+        }
+        .exchange-rate {
+            font-size: 14px;
+            color: var(--bts-navy);
+            text-align: right;
+            margin-bottom: 15px;
+            font-weight: 500;
+            background-color: rgba(255,255,255,0.7);
+            padding: 8px 15px;
+            border-radius: 20px;
+            display: inline-block;
+            float: right;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+            border-bottom: 1px solid #eaeaea;
+            position: relative;
+            z-index: 1;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            color: #777;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        .tab.active {
+            color: var(--bts-navy);
+            border-bottom-color: var(--bts-orange);
+        }
+        .tab:hover {
+            color: var(--bts-orange);
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+            animation: fadeIn 0.5s;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .custom-footer {
+            text-align: center;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eaeaea;
+            color: var(--bts-navy);
+            font-size: 14px;
+        }
+        .custom-footer .tagline {
+            font-style: italic;
+            color: var(--bts-orange);
+            margin: 10px 0;
+            font-size: 16px;
+        }
+        .custom-footer .disclaimer {
+            font-size: 12px;
+            color: #777;
+            margin-top: 5px;
+        }
+        .toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background-color: var(--bts-navy);
+            color: white;
+            padding: 15px 25px;
+            border-radius: 5px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            transform: translateX(120%);
+            transition: transform 0.3s ease;
+            z-index: 1000;
+        }
+        .toast.show {
+            transform: translateX(0);
+        }
+        .toast i {
+            margin-right: 10px;
+            font-size: 20px;
+            color: var(--bts-orange);
+        }
+        .progress-bar {
+            height: 5px;
+            background-color: var(--bts-light-blue);
+            border-radius: 5px;
+            margin: 30px 0;
+            position: relative;
+            overflow: hidden;
+        }
+        .progress-bar .progress {
+            position: absolute;
+            height: 100%;
+            background: linear-gradient(to right, var(--bts-navy), var(--bts-orange));
+            border-radius: 5px;
+            width: 0;
+            transition: width 0.3s ease;
+        }
+        .step-indicator {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+        .step {
+            text-align: center;
+            color: #777;
+            font-weight: 600;
+            font-size: 14px;
+            position: relative;
+            flex: 1;
+        }
+        .step.active {
+            color: var(--bts-navy);
+        }
+        .step.completed {
+            color: var(--bts-orange);
+        }
+        .step::before {
+            content: '';
+            width: 30px;
+            height: 30px;
+            background-color: #eaeaea;
+            border-radius: 50%;
+            display: block;
+            margin: 0 auto 10px;
+            line-height: 30px;
+            color: white;
+            font-weight: bold;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        .step.active::before {
+            background-color: var(--bts-navy);
+        }
+        .step.completed::before {
+            background-color: var(--bts-orange);
+        }
+        .step:first-child::after, .step:nth-child(2)::after {
+            content: '';
+            position: absolute;
+            top: 15px;
+            right: -50%;
+            width: 100%;
+            height: 2px;
+            background-color: #eaeaea;
+            z-index: -1;
+        }
+        .step.completed:first-child::after, .step.completed:nth-child(2)::after {
+            background-color: var(--bts-orange);
+        }
+        .currency-switch {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            margin-bottom: 10px;
+        }
+        .currency-switch label {
+            margin-right: 10px;
+            margin-bottom: 0;
+        }
+        .toggle {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 30px;
+        }
+        .toggle input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        input:checked + .toggle-slider {
+            background-color: var(--bts-orange);
+        }
+        input:checked + .toggle-slider:before {
+            transform: translateX(30px);
+        }
+        .currency-label {
+            margin: 0 10px;
+            font-weight: 600;
+            color: var(--bts-navy);
+        }
+        
+        /* Animation for calculating effect */
+        .calculating {
+            position: relative;
+        }
+        .calculating::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255,255,255,0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            font-size: 20px;
+            color: var(--bts-navy);
+        }
+        
+        /* Print styles */
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+                margin: 0;
+            }
+            .container {
+                box-shadow: none;
+                border-top: none;
+                padding: 0;
+            }
+            .form-container, .tabs, .btn, .progress-bar, .step-indicator, .currency-switch {
+                display: none !important;
+            }
+            .results {
+                display: block !important;
+                border-top: none;
+                margin-top: 0;
+            }
+            .custom-footer {
+                border-top: 1px solid #ddd;
+            }
+        }
+        
+        /* Responsive styles */
+        @media (max-width: 768px) {
+            .container {
+                padding: 20px;
+            }
+            .brand-name {
+                font-size: 28px;
+            }
+            .form-group {
+                min-width: 100%;
+            }
+            .tab {
+                padding: 8px 12px;
+                font-size: 14px;
+            }
+            .step-indicator {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="brand-name">BTS</div>
+            <h1>Cargo Cost Calculator</h1>
+            <div class="subtitle">Service with maximum concern</div>
+        </header>
+
+        <div class="tabs">
+            <div class="tab active" data-tab="calculator">Calculator</div>
+            <div class="tab" data-tab="info">Information</div>
+            <div class="tab" data-tab="help">Help & Tips</div>
+        </div>
+
+        <div class="tab-content active" id="calculator">
+            <div class="step-indicator">
+                <div class="step active">Cargo Details</div>
+                <div class="step">Clearance Options</div>
+                <div class="step">Results</div>
+            </div>
+            
+            <div class="progress-bar">
+                <div class="progress" style="width: 33%"></div>
+            </div>
+            
+            <div class="form-container">
+                <form id="cargoForm">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="cargoType">Cargo Type</label>
+                            <i class="fas fa-box"></i>
+                            <select id="cargoType" required>
+                                <option value="">Select Cargo Type</option>
+                                <option value="general">General Cargo</option>
+                                <option value="container20">Container 20ft</option>
+                                <option value="container40">Container 40ft</option>
+                                <option value="vehicle">Vehicle</option>
+                                <option value="machinery">Machinery</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="originPort">Origin Port</label>
+                            <i class="fas fa-ship"></i>
+                            <select id="originPort" required>
+                                <option value="">Select Origin Port</option>
+                                <option value="mombasa">Mombasa</option>
+                                <option value="darEsSalaam">Dar Es Salaam</option>
+                                <option value="dubai">Dubai</option>
+                                <option value="china">China Ports</option>
+                                <option value="europe">European Ports</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="cargoValue">Cargo CIF Value (USD)</label>
+                            <i class="fas fa-dollar-sign"></i>
+                            <input type="number" id="cargoValue" min="0" placeholder="Enter CIF value" required>
+                            <div class="field-description">Cost, Insurance & Freight Value</div>
+                        </div>
+                        <div class="form-group">
+                            <label for="cargoWeight">Cargo Weight (kg)</label>
+                            <i class="fas fa-weight-hanging"></i>
+                            <input type="number" id="cargoWeight" min="0" placeholder="Enter weight in kg" required>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="clearanceMode">Clearance Mode</label>
+                            <i class="fas fa-clipboard-check"></i>
+                            <select id="clearanceMode" required>
+                                <option value="">Select Clearance Mode</option>
+                                <option value="normal">Normal Clearance</option>
+                                <option value="express">Express Clearance</option>
+                                <option value="special">Special Handling</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="customsPeriod">Customs Period</label>
+                            <i class="fas fa-calendar-alt"></i>
+                            <select id="customsPeriod" required>
+                                <option value="">Select Period</option>
+                                <option value="regular">Regular (0-14 days)</option>
+                                <option value="extended">Extended (15-21 days)</option>
+                                <option value="overdue">Overdue (>21 days)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="hsCode">HS Code</label>
+                            <i class="fas fa-hashtag"></i>
+                            <input type="text" id="hsCode" placeholder="Optional - HS Code if known">
+                            <div class="field-description">Harmonized System Code for duty calculation</div>
+                        </div>
+                        <div class="form-group">
+                            <label for="dutyRate">Duty Rate (%)</label>
+                            <i class="fas fa-percent"></i>
+                            <input type="number" id="dutyRate" min="0" max="100" placeholder="Default based on cargo type">
+                            <div class="field-description">Leave blank for automatic calculation</div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="includeBTS">BTS Service Level</label>
+                            <i class="fas fa-award"></i>
+                            <select id="includeBTS" required>
+                                <option value="standard">Standard Service</option>
+                                <option value="premium">Premium Service</option>
+                                <option value="expedited">Expedited Service</option>
+                            </select>
+                            <div class="field-description">BTS service level with maximum concern</div>
+                        </div>
+                        <div class="form-group">
+                            <label for="insurance">Insurance Required</label>
+                            <i class="fas fa-shield-alt"></i>
+                            <select id="insurance" required>
+                                <option value="no">No</option>
+                                <option value="yes">Yes</option>
+                            </select>
+                            <div class="field-description">Additional cargo insurance</div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn">Calculate Total Cost</button>
+                </form>
+            </div>
+
+            <div class="results hidden" id="resultsSection">
+                <h2>Cost Breakdown</h2>
+                
+                <div class="currency-switch">
+                    <span class="currency-label">USD</span>
+                    <label class="toggle">
+                        <input type="checkbox" id="currencyToggle">
+                        <span class="toggle-slider"></span>
+                    </label>
+                    <span class="currency-label">UGX</span>
+                </div>
+                
+                <div class="exchange-rate" id="exchangeRate">Exchange Rate: 1 USD = 3,700 UGX</div>
+                <div class="cost-breakdown" id="costBreakdown">
+                    <!-- Results will be inserted here by JavaScript -->
+                </div>
+                
+                <div style="text-align: center; margin-top: 20px;">
+                    <button id="printBtn" class="btn" style="max-width: 200px; background: var(--bts-orange);">
+                        <i class="fas fa-print"></i> Print Quote
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-content" id="info">
+            <h2>Import Clearance Information</h2>
+            <p>BTS Clearing & Forwarding Limited provides comprehensive clearance services for various cargo types entering Uganda through multiple ports of entry. Our services include:</p>
+            
+            <ul>
+                <li><strong>Documentation Handling:</strong> Complete processing of all required customs documentation</li>
+                <li><strong>Duty & Tax Calculation:</strong> Expert assessment of applicable duties and taxes</li>
+                <li><strong>Customs Representation:</strong> Professional representation with customs authorities</li>
+                <li><strong>Cargo Inspection:</strong> Coordination of inspection procedures</li>
+                <li><strong>Warehousing & Storage:</strong> Temporary storage facilities when needed</li>
+                <li><strong>Transportation:</strong> Inland transportation from port to destination</li>
+            </ul>
+            
+            <p>The calculator provides estimates based on current rates and regulations. For specific inquiries or specialized cargo handling requirements, please contact our customer service team.</p>
+        </div>
+
+        <div class="tab-content" id="help">
+            <h2>Help & Tips</h2>
+            <p>To get the most accurate cost estimate, follow these guidelines:</p>
+            
+            <ol>
+                <li><strong>Cargo Type:</strong> Select the appropriate category that best matches your shipment</li>
+                <li><strong>CIF Value:</strong> Enter the total Cost, Insurance, and Freight value in USD</li>
+                <li><strong>HS Code:</strong> If known, enter the Harmonized System code for more accurate duty calculation</li>
+                <li><strong>Service Level:</strong> Choose the service level based on your timeline and requirements</li>
+                <li><strong>Insurance:</strong> Select "Yes" if additional cargo insurance is required</li>
+            </ol>
+            
+            <p><strong>Note:</strong> This calculator provides estimates only. Final costs may vary based on actual clearance conditions, additional services required, or changes in regulations.</p>
+            
+            <p>For assistance with the calculator or questions about our services, contact us at:</p>
+            <div style="background: var(--bts-light-blue); padding: 10px; border-radius: 5px; display: inline-block;">
+                <strong>Email:</strong> info@btsclearing.com<br>
+                <strong>Phone:</strong> +256 414 123456
+            </div>
+        </div>
+
+        <div class="custom-footer">
+            <div class="tagline">BTS Clearing & Forwarding Limited - Service with maximum concern</div>
+            <div class="disclaimer">This is an estimate. Final costs may vary based on actual clearance conditions.</div>
+            <div style="margin-top: 10px;">© 2025 BTS Clearing & Forwarding Limited. All rights reserved.</div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast">
+        <i class="fas fa-info-circle"></i>
+        <span id="toastMessage">Calculating costs...</span>
+    </div>
+
+    <script>
+        // Tab functionality
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                // Remove active class from all tabs and content
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                
+                // Add active class to clicked tab and corresponding content
+                tab.classList.add('active');
+                document.getElementById(tab.dataset.tab).classList.add('active');
+            });
+        });
+
+        // Form submission
+        document.getElementById('cargoForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            // Show toast
+            showToast('Calculating costs...', 'info');
+            
+            // Add calculating class
+            document.querySelector('.cost-breakdown')?.classList.add('calculating');
+            
+            // Simulate calculation delay
+            setTimeout(() => {
+                calculateCosts();
+                
+                // Update progress
+                document.querySelector('.progress').style.width = '100%';
+                document.querySelectorAll('.step').forEach(step => step.classList.add('completed'));
+                
+                // Remove calculating class
+                document.querySelector('.cost-breakdown').classList.remove('calculating');
+                
+                // Show success toast
+                showToast('Calculation completed!', 'success');
+                
+                // Scroll to results
+                document.getElementById('resultsSection').scrollIntoView({ behavior: 'smooth' });
+            }, 800);
+        });
+
+        // Print functionality
+        document.getElementById('printBtn').addEventListener('click', function() {
+            window.print();
+        });
+
+        // Currency toggle
+        document.getElementById('currencyToggle').addEventListener('change', function() {
+            updateCurrencyDisplay(this.checked);
+        });
+
+        function updateCurrencyDisplay(showUGX) {
+            const costItems = document.querySelectorAll('.cost-item');
+            costItems.forEach(item => {
+                const valueText = item.querySelector('div:last-child').textContent;
+                const values = valueText.match(/\$([0-9,.]+) \(UGX ([0-9,]+)\)/);
+                
+                if (values) {
+                    const usdValue = values[1];
+                    const ugxValue = values[2];
+                    
+                    if (showUGX) {
+                        item.querySelector('div:last-child').textContent = `UGX ${ugxValue} (${usdValue})`;
+                    } else {
+                        item.querySelector('div:last-child').textContent = `${usdValue} (UGX ${ugxValue})`;
+                    }
+                }
+            });
+        }
+
+        function showToast(message, type) {
+            const toast = document.getElementById('toast');
+            const icon = toast.querySelector('i');
+            
+            // Set icon based on type
+            if (type === 'success') {
+                icon.className = 'fas fa-check-circle';
+                icon.style.color = '#4CAF50';
+            } else if (type === 'error') {
+                icon.className = 'fas fa-exclamation-circle';
+                icon.style.color = '#F44336';
+            } else {
+                icon.className = 'fas fa-info-circle';
+                icon.style.color = '#F26D21';
+            }
+            
+            document.getElementById('toastMessage').textContent = message;
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        function calculateCosts() {
+            // Get form values
+            const cargoType = document.getElementById('cargoType').value;
+            const originPort = document.getElementById('originPort').value;
+            const cargoValue = parseFloat(document.getElementById('cargoValue').value) || 0;
+            const cargoWeight = parseFloat(document.getElementById('cargoWeight').value) || 0<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BTS Cargo Cost Calculator - Direct Clearance MSA</title>
+    <link rel="icon" href="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAwIiBoZWlnaHQ9IjEwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iNTAiIGN5PSI1MCIgcj0iNDUiIGZpbGw9IiNGMjZEMjEiIHN0cm9rZT0iIzBBMjI1NyIgc3Ryb2tlLXdpZHRoPSIzIi8+CjxwYXRoIGQ9Ik0yMCA1MCBMODAgNTAiIHN0cm9rZT0iIzBBMjI1NyIgc3Ryb2tlLXdpZHRoPSI2IiBzdHJva2UtbGluZWNhcD0icm91bmQiLz4KPGcgZmlsbD0iIzBBMjI1NyIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXdlaWdodD0iYm9sZCIgZm9udC1zaXplPSIzNnB4Ij4KICA8dGV4dCB4PSIzNSIgeT0iNjUiPkJUUzwvdGV4dD4KPC9nPgo8L3N2Zz4="
+    <style>
+        /* BTS Colors from logo */
+        :root {
+            --bts-navy: #0A2257;     /* Dark navy blue from BTS letters */
+            --bts-orange: #F26D21;   /* Orange from globe and tagline */
+            --bts-light-orange: #FFEBDF; /* Light orange for accents */
+            --bts-light-blue: #E8EDF5; /* Light blue for backgrounds */
+        }
+        
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background-color: var(--bts-light-blue);
+            margin: 0;
+            padding: 20px;
+            color: #333;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            border-top: 5px solid var(--bts-orange);
+        }
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eaeaea;
+            position: relative;
+        }
+        .logo {
+            max-width: 150px;
+            margin-bottom: 15px;
+        }
+        h1 {
+            color: var(--bts-navy);
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+        .subtitle {
+            color: var(--bts-orange);
+            font-size: 16px;
+            font-style: italic;
+        }
+        .form-row {
+            display: flex;
+            flex-wrap: wrap;
+            margin-bottom: 15px;
+            gap: 20px;
+        }
+        .form-group {
+            flex: 1;
+            min-width: 250px;
+        }
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: var(--bts-navy);
+        }
+        input, select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--bts-orange);
+            box-shadow: 0 0 0 2px rgba(242, 109, 33, 0.2);
+        }
+        .btn {
+            background-color: var(--bts-navy);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            width: 100%;
+        }
+        .btn:hover {
+            background-color: var(--bts-orange);
+        }
+        .results {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #eaeaea;
+        }
+        .cost-breakdown {
+            background-color: var(--bts-light-blue);
+            border-radius: 6px;
+            padding: 20px;
+            margin-top: 20px;
+            border-left: 4px solid var(--bts-navy);
+        }
+        .cost-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .cost-item:last-child {
+            border-bottom: none;
+        }
+        .cost-item.total {
+            font-weight: bold;
+            font-size: 18px;
+            margin-top: 10px;
+            padding-top: 15px;
+            border-top: 2px solid var(--bts-orange);
+            color: var(--bts-navy);
+        }
+        .hidden {
+            display: none;
+        }
+        .field-description {
+            color: #777;
+            font-size: 12px;
+            margin-top: 4px;
+        }
+        .exchange-rate {
+            font-size: 14px;
+            color: var(--bts-navy);
+            text-align: right;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+        h2 {
+            color: var(--bts-navy);
+            border-bottom: 2px solid var(--bts-orange);
+            display: inline-block;
+            padding-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="logo-container">
+                <svg width="150" height="150" viewBox="0 0 600 400" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Orange Globe -->
+                    <ellipse cx="300" cy="200" rx="250" ry="150" fill="#F26D21" fill-opacity="0.9"/>
+                    
+                    <!-- Grid lines -->
+                    <path d="M300 50 L300 350" stroke="white" stroke-width="2"/>
+                    <path d="M300 50 L300 350" stroke="white" stroke-width="2" transform="rotate(30 300 200)"/>
+                    <path d="M300 50 L300 350" stroke="white" stroke-width="2" transform="rotate(60 300 200)"/>
+                    <path d="M300 50 L300 350" stroke="white" stroke-width="2" transform="rotate(90 300 200)"/>
+                    <path d="M300 50 L300 350" stroke="white" stroke-width="2" transform="rotate(120 300 200)"/>
+                    <path d="M300 50 L300 350" stroke="white" stroke-width="2" transform="rotate(150 300 200)"/>
+                    
+                    <path d="M50 200 L550 200" stroke="white" stroke-width="2"/>
+                    <path d="M50 130 L550 130" stroke="white" stroke-width="2"/>
+                    <path d="M50 270 L550 270" stroke="white" stroke-width="2"/>
+                    
+                    <!-- Blue orbit around globe -->
+                    <path d="M 50 200 C 50 280, 550 280, 550 200" stroke="#0A2257" stroke-width="15" fill="none"/>
+                    
+                    <!-- BTS Letters -->
+                    <text x="190" y="280" font-family="Arial Black, Arial, sans-serif" font-size="120" font-weight="800" fill="#0A2257">BTS</text>
+                </svg>
+            </div>
+            <h1>Cargo Cost Calculator</h1>
+            <div class="subtitle">Service with maximum concern</div>
+        </header>
+
+        <form id="cargoForm">
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="cargoType">Cargo Type</label>
+                    <select id="cargoType" required>
+                        <option value="">Select Cargo Type</option>
+                        <option value="general">General Cargo</option>
+                        <option value="container20">Container 20ft</option>
+                        <option value="container40">Container 40ft</option>
+                        <option value="vehicle">Vehicle</option>
+                        <option value="machinery">Machinery</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="originPort">Origin Port</label>
+                    <select id="originPort" required>
+                        <option value="">Select Origin Port</option>
+                        <option value="mombasa">Mombasa</option>
+                        <option value="darEsSalaam">Dar Es Salaam</option>
+                        <option value="dubai">Dubai</option>
+                        <option value="china">China Ports</option>
+                        <option value="europe">European Ports</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="cargoValue">Cargo CIF Value (USD)</label>
+                    <input type="number" id="cargoValue" min="0" placeholder="Enter CIF value" required>
+                    <div class="field-description">Cost, Insurance & Freight Value</div>
+                </div>
+                <div class="form-group">
+                    <label for="cargoWeight">Cargo Weight (kg)</label>
+                    <input type="number" id="cargoWeight" min="0" placeholder="Enter weight in kg" required>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="clearanceMode">Clearance Mode</label>
+                    <select id="clearanceMode" required>
+                        <option value="">Select Clearance Mode</option>
+                        <option value="normal">Normal Clearance</option>
+                        <option value="express">Express Clearance</option>
+                        <option value="special">Special Handling</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="customsPeriod">Customs Period</label>
+                    <select id="customsPeriod" required>
+                        <option value="">Select Period</option>
+                        <option value="regular">Regular (0-14 days)</option>
+                        <option value="extended">Extended (15-21 days)</option>
+                        <option value="overdue">Overdue (>21 days)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="hsCode">HS Code</label>
+                    <input type="text" id="hsCode" placeholder="Optional - HS Code if known">
+                    <div class="field-description">Harmonized System Code for duty calculation</div>
+                </div>
+                <div class="form-group">
+                    <label for="dutyRate">Duty Rate (%)</label>
+                    <input type="number" id="dutyRate" min="0" max="100" placeholder="Default based on cargo type">
+                    <div class="field-description">Leave blank for automatic calculation</div>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="includeBTS">BTS Service Level</label>
+                    <select id="includeBTS" required>
+                        <option value="standard">Standard Service</option>
+                        <option value="premium">Premium Service</option>
+                        <option value="expedited">Expedited Service</option>
+                    </select>
+                    <div class="field-description">BTS service level with maximum concern</div>
+                </div>
+                <div class="form-group">
+                    <label for="insurance">Insurance Required</label>
+                    <select id="insurance" required>
+                        <option value="no">No</option>
+                        <option value="yes">Yes</option>
+                    </select>
+                    <div class="field-description">Additional cargo insurance</div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn">Calculate Total Cost</button>
+        </form>
+
+        <div class="results hidden" id="resultsSection">
+            <h2>Cost Breakdown</h2>
+            <div class="exchange-rate" id="exchangeRate">Exchange Rate: 1 USD = 3,700 UGX</div>
+            <div class="cost-breakdown" id="costBreakdown">
+                <!-- Results will be inserted here by JavaScript -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('cargoForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            calculateCosts();
+        });
+
+        function calculateCosts() {
+            // Get form values
+            const cargoType = document.getElementById('cargoType').value;
+            const originPort = document.getElementById('originPort').value;
+            const cargoValue = parseFloat(document.getElementById('cargoValue').value) || 0;
+            const cargoWeight = parseFloat(document.getElementById('cargoWeight').value) || 0;
+            const clearanceMode = document.getElementById('clearanceMode').value;
+            const customsPeriod = document.getElementById('customsPeriod').value;
+            const serviceLevel = document.getElementById('includeBTS').value;
+            const insurance = document.getElementById('insurance').value;
+            
+            // Get user-input duty rate or use default
+            let dutyRate = parseFloat(document.getElementById('dutyRate').value);
+            if (isNaN(dutyRate)) {
+                // Set default duty rates based on cargo type
+                switch(cargoType) {
+                    case 'general': dutyRate = 25; break;
+                    case 'container20': dutyRate = 25; break;
+                    case 'container40': dutyRate = 25; break;
+                    case 'vehicle': dutyRate = 35; break;
+                    case 'machinery': dutyRate = 15; break;
+                    default: dutyRate = 25;
+                }
+            }
+
+            // Exchange rate
+            const exchangeRate = 3700; // 1 USD = 3700 UGX
+            
+            // Calculate costs
+            let costs = [];
+            
+            // Import duty
+            const importDuty = cargoValue * (dutyRate / 100);
+            costs.push({name: "Import Duty", value: importDuty});
+            
+            // VAT (Standard 18%)
+            const vat = (cargoValue + importDuty) * 0.18;
+            costs.push({name: "VAT (18%)", value: vat});
+            
+            // Infrastructure Levy (1.5%)
+            const infraLevy = cargoValue * 0.015;
+            costs.push({name: "Infrastructure Levy (1.5%)", value: infraLevy});
+            
+            // Clearance fees
+            let clearanceFee = 0;
+            switch(clearanceMode) {
+                case 'normal': clearanceFee = 200; break;
+                case 'express': clearanceFee = 350; break;
+                case 'special': clearanceFee = 500; break;
+            }
+            costs.push({name: "Clearance Fee", value: clearanceFee});
+            
+            // Documentation fees
+            costs.push({name: "Documentation Fee", value: 100});
+            
+            // Agency fee
+            let agencyFee = Math.max(cargoValue * 0.01, 150); // 1% of value or minimum $150
+            costs.push({name: "Agency Fee", value: agencyFee});
+            
+            // BTS Service fee based on service level
+            let btsServiceFee = 0;
+            switch(serviceLevel) {
+                case 'standard': btsServiceFee = Math.max(cargoValue * 0.01, 100); break; // 1% of value, min $100
+                case 'premium': btsServiceFee = Math.max(cargoValue * 0.015, 150); break; // 1.5% of value, min $150
+                case 'expedited': btsServiceFee = Math.max(cargoValue * 0.02, 200); break; // 2% of value, min $200
+            }
+            costs.push({name: "BTS Service Fee", value: btsServiceFee});
+            
+            // Insurance if required
+            if (insurance === 'yes') {
+                const insuranceFee = cargoValue * 0.0075; // 0.75% of cargo value
+                costs.push({name: "Cargo Insurance", value: insuranceFee});
+            }
+            
+            // Handling charges based on cargo type
+            let handlingFee = 0;
+            switch(cargoType) {
+                case 'general': handlingFee = cargoWeight * 0.05; break; // $0.05 per kg
+                case 'container20': handlingFee = 200; break;
+                case 'container40': handlingFee = 350; break;
+                case 'vehicle': handlingFee = 250; break;
+                case 'machinery': handlingFee = 500; break;
+            }
+            costs.push({name: "Handling Fee", value: handlingFee});
+            
+            // Port charges
+            let portCharges = 0;
+            switch(originPort) {
+                case 'mombasa': portCharges = 180; break;
+                case 'darEsSalaam': portCharges = 200; break;
+                case 'dubai': portCharges = 250; break;
+                case 'china': portCharges = 300; break;
+                case 'europe': portCharges = 350; break;
+            }
+            costs.push({name: "Port Charges", value: portCharges});
+            
+            // Storage charges based on period
+            let storageCharges = 0;
+            switch(customsPeriod) {
+                case 'regular': storageCharges = 0; break; // Free for first 14 days
+                case 'extended': storageCharges = cargoType.includes('container') ? 30 * 7 : 15 * 7; break; // $30/day for container, $15/day for others, for 7 days
+                case 'overdue': storageCharges = cargoType.includes('container') ? 50 * 10 : 25 * 10; break; // $50/day for container, $25/day for others, for 10 days
+            }
+            costs.push({name: "Storage Charges", value: storageCharges});
+            
+            // Transport fee (if applicable)
+            const transportFee = 200; // Simplified flat rate
+            costs.push({name: "Transport Fee", value: transportFee});
+            
+            // Calculate total
+            const totalUSD = costs.reduce((sum, item) => sum + item.value, 0);
+            const totalUGX = totalUSD * exchangeRate;
+            
+            // Display results
+            displayResults(costs, totalUSD, totalUGX, exchangeRate, dutyRate);
+        }
+
+        function displayResults(costs, totalUSD, totalUGX, exchangeRate, dutyRate) {
+            const resultsSection = document.getElementById('resultsSection');
+            const costBreakdown = document.getElementById('costBreakdown');
+            const exchangeRateElement = document.getElementById('exchangeRate');
+            
+            // Update exchange rate display
+            exchangeRateElement.textContent = `Exchange Rate: 1 USD = ${exchangeRate.toLocaleString()} UGX (Duty Rate: ${dutyRate}%)`;
+            
+            // Clear previous results
+            costBreakdown.innerHTML = '';
+            
+            // Add each cost item
+            costs.forEach(item => {
+                const costItem = document.createElement('div');
+                costItem.className = 'cost-item';
+                costItem.innerHTML = `
+                    <div>${item.name}</div>
+                    <div>$${item.value.toFixed(2)} (UGX ${(item.value * exchangeRate).toLocaleString()})</div>
+                `;
+                costBreakdown.appendChild(costItem);
+            });
+            
+            // Add total
+            const totalItem = document.createElement('div');
+            totalItem.className = 'cost-item total';
+            totalItem.innerHTML = `
+                <div>TOTAL</div>
+                <div>${totalUSD.toFixed(2)} (UGX ${totalUGX.toLocaleString()})</div>
+            `;
+            costBreakdown.appendChild(totalItem);
+            
+            // Add footer with BTS branding
+            const footerItem = document.createElement('div');
+            footerItem.style.textAlign = 'center';
+            footerItem.style.marginTop = '20px';
+            footerItem.style.color = '#0A2257';
+            footerItem.style.fontSize = '14px';
+            footerItem.innerHTML = `
+                <div style="font-style: italic; color: #F26D21; margin-top: 10px;">BTS Clearing & Forwarding Limited - Service with maximum concern</div>
+                <div style="margin-top: 5px;">This is an estimate. Final costs may vary based on actual clearance conditions.</div>
+            `;
+            costBreakdown.appendChild(footerItem);
+            
+            // Show results section
+            resultsSection.classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
